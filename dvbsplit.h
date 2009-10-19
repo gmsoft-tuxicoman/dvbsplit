@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <unistd.h>
 
 
 #include <linux/dvb/dmx.h>
