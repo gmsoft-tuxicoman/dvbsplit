@@ -20,14 +20,69 @@
 
 #include "dvbsplit.h"
 
+#include <getopt.h>
+
+
 static struct ts_program *progs_head = NULL;
 static struct ts_es *es_head = NULL;
+static char *dest = NULL;
+
+void print_usage() {
+
+	printf( "Usage : dvbsplit [options] [dest-folder]\n"
+		"You must first tune to the right transponder by using an external application such as czap.\n"
+		"\n"
+		"Options :\n"
+		" -a, --adapter=x   DVB adapter to use\n"
+		"\n"
+		"dest-folder        destination folder for the TS files\n"
+		"\n");
+	return;
+
+}
 
 int main(int argc, char *argv[]) {
 
+	int adapt = 0;
+	int c;	
+	while (1) {
+		static struct option long_options[] = {
+			{ "adapter", 1, 0, 'a' },
+			{ "help", 0, 0, 'h'},
+		};
+	
+		char *args = "a:h";
+
+
+		c = getopt_long(argc, argv, args, long_options, NULL);
+
+		if (c == -1)
+			break;
+
+		switch (c) {
+			case 'a':
+				if (sscanf(optarg, "%u", &adapt) != 1) {
+					printf("Invalid adapter id \"%s\"\n", optarg);
+					print_usage();
+					return -1;
+				}
+				break;
+			case 'h':
+			default:
+				print_usage();
+				return -1;
+
+				
+		}
+	}
+
+	if (optind < argc)
+		dest = argv[optind];
+
 
 	// Open demux device
-	char *demux_dev = "/dev/dvb/adapter0/demux0";
+	char demux_dev[NAME_MAX + 1];
+	snprintf(demux_dev, NAME_MAX, "/dev/dvb/adapter%u/demux0", adapt);
 	
 	int demux_fd = open(demux_dev, O_RDWR);
 	if (demux_fd == -1) {
@@ -57,7 +112,8 @@ int main(int argc, char *argv[]) {
 
 	// Open the dvr device
 	
-	char *dvr_dev = "/dev/dvb/adapter0/dvr0";
+	char dvr_dev[NAME_MAX];
+	snprintf(dvr_dev, NAME_MAX, "/dev/dvb/adapter%u/dvr0", adapt);
 	int dvr_fd = open(dvr_dev, O_RDONLY);
 	if (dvr_fd == -1) {
 		printf("Unable to open the dvr device %s\n", dvr_dev);
@@ -190,8 +246,10 @@ struct ts_program *alloc_prog(uint16_t pnum, uint16_t pid) {
 
 	printf("New program 0x%X, PID 0x%X\n", pnum, pid);
 
-	char filename[NAME_MAX + 1];
-	char *prefix = "/mnt/data/";
+	if (dest) {
+		if (dest[strlen(dest) - 1] == '/')
+			dest[strlen(dest) - 1] = 0;
+	}
 	
 	struct tm tmp_time;
 	time_t now = time(NULL);
@@ -201,7 +259,11 @@ struct ts_program *alloc_prog(uint16_t pnum, uint16_t pid) {
 	strftime(time_str, sizeof(time_str), format, &tmp_time);
 
 
-	snprintf(filename, NAME_MAX, "%s%s-%u.ts", prefix, time_str, pnum);
+	char filename[NAME_MAX + 1];
+	if (dest)
+		snprintf(filename, NAME_MAX, "%s/%s-%u.ts", dest, time_str, pnum);
+	else
+		snprintf(filename, NAME_MAX, "%s-%u.ts", time_str, pnum);
 	int fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd == -1) {
 		printf("Unable to open %s\n", filename);

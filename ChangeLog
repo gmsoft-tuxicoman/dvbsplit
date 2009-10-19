@@ -1,2 +1,7 @@
+* 2009/10/19 Guy Martin <gmsoft@tuxicoman.be>
+Added autotool stuff.
+Added getopts support.
+Added usage info.
+
 * 2009/10/16 Guy Martin <gmsoft@tuxicoman.be>
 Initial commit.

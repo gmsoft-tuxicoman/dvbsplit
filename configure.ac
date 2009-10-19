@@ -41,10 +41,11 @@ AC_PROG_LIBTOOL
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 
+
 # Check for libdvbpsi
 
 AC_CHECK_LIB([dvbpsi], [dvbpsi_AttachPAT, dvbpsi_AttachPMT], [], [AC_MSG_ERROR([Could not find libdvbpsi])])
 AC_CHECK_HEADER([dvbpsi/dvbpsi.h], [], [AC_MSG_ERROR([Could not find libdvbpsi headers])])
-
+AC_CHECK_HEADERS([linux/dvb/dmx.h linux/dvb/frontend.h], [], [AC_MSG_ERROR([Could not find linux DVB headers])])
 
 AC_OUTPUT
