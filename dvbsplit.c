@@ -33,9 +33,10 @@ void print_usage() {
 		"You must first tune to the right transponder by using an external application such as czap.\n"
 		"\n"
 		"Options :\n"
-		" -a, --adapter=x   DVB adapter to use\n"
+		" -a, --adapter=x        DVB adapter to use\n"
+		" -n, --no-copy-pat-pmt  don't copy the original PAT and PMT in the output TS file\n"
 		"\n"
-		"dest-folder        destination folder for the TS files\n"
+		"dest-folder             destination folder for the TS files\n"
 		"\n");
 	return;
 
@@ -44,14 +45,16 @@ void print_usage() {
 int main(int argc, char *argv[]) {
 
 	int adapt = 0;
-	int c;	
+	int c;
+	int copy_pat_pmt = 1;
 	while (1) {
 		static struct option long_options[] = {
 			{ "adapter", 1, 0, 'a' },
+			{ "no-copy-pat-pmt", 1, 0, 'n'},
 			{ "help", 0, 0, 'h'},
 		};
 	
-		char *args = "a:h";
+		char *args = "a:nh";
 
 
 		c = getopt_long(argc, argv, args, long_options, NULL);
@@ -66,6 +69,9 @@ int main(int argc, char *argv[]) {
 					print_usage();
 					return -1;
 				}
+				break;
+			case 'c':
+				copy_pat_pmt = 1;
 				break;
 			case 'h':
 			default:
@@ -134,18 +140,24 @@ int main(int argc, char *argv[]) {
 			// do nothing
 			processed = 1;
 		} else if (pid == 0) {
-			processed = 1;
+			if (copy_pat_pmt) {
+				struct ts_program *tmp = progs_head;
+				while (tmp) {
+					if (!write_packet(tmp->fd, buff)) 
+						return -1;
+					tmp = tmp->next;
+				}
+			}
 			dvbpsi_PushPacket(pat_parser, buff);
+			processed = 1;
 		}
 
 		if (!processed) {
 			struct ts_es *tmp = es_head;
 			while (tmp) {
 				if (pid == tmp->pid) {
-					if (!write_packet(tmp->prog->fd, buff)) {
-						printf("Write error\n");
+					if (!write_packet(tmp->prog->fd, buff)) 
 						return -1;
-					}
 					processed = 1;
 					break;
 				}
@@ -157,6 +169,10 @@ int main(int argc, char *argv[]) {
 			struct ts_program *tmp = progs_head;
 			while (tmp) {
 				if (pid == tmp->pid) {
+					if (copy_pat_pmt) {
+						if (!write_packet(tmp->fd, buff))
+							return -1;
+					}
 					dvbpsi_PushPacket(tmp->pmt_parser, buff);
 					processed = 1;
 					break;
@@ -229,8 +245,10 @@ int write_packet(int fd, uint8_t *buff) {
 			i -= ret;
 	}
 
-	if (i != 0)
+	if (i != 0) {
+		printf("Write error\n");
 		return 0;
+	}
 
 	return 1;
 

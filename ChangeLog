@@ -1,3 +1,6 @@
+* 2009/10/21 Guy Martin <gmsoft@tuxicoman.be>
+Copy PAT and PMT packets in the output TS file by default.
+
 * 2009/10/19 Guy Martin <gmsoft@tuxicoman.be>
 Added autotool stuff.
 Added getopts support.
