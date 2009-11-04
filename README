@@ -1,0 +1,20 @@
+dvbsplit : split programs from an MPEG TS stream into separate files
+Author : Guy Martin <gmsoft@tuxicoman.be>
+
+
+Building from svn :
+-------------------
+autoreconf -f -i
+./configure
+make && make install
+
+Dependencies :
+--------------
+You need libdvbpsi to parse the PSI tables from the MPEG stream.
+
+Running it :
+------------
+First, tune to the right frequency using czap or any similar application.
+Then run dvbsplit on the right dvb adapter.
+See `dvbsplit --help` for more details.
+

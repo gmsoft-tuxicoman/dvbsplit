@@ -50,8 +50,9 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		static struct option long_options[] = {
 			{ "adapter", 1, 0, 'a' },
-			{ "no-copy-pat-pmt", 1, 0, 'n'},
-			{ "help", 0, 0, 'h'},
+			{ "no-copy-pat-pmt", 1, 0, 'n' },
+			{ "help", 0, 0, 'h' },
+			{ NULL, 0, 0, 0 },
 		};
 	
 		char *args = "a:nh";
